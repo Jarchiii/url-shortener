@@ -1,0 +1,36 @@
+{
+  "name": "url-shortener-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/server.ts",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/src/server.js",
+    "test": "jest",
+    "test:integration": "INTEGRATION=1 jest",
+    "test:watch": "jest --watch",
+    "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "migrate:test": "tsx --env-file=.env scripts/migrate.ts --test"
+  },
+  "dependencies": {
+    "express": "5.2.1",
+    "ioredis": "6.0.0",
+    "nanoid": "6.0.1",
+    "pg": "8.23.0",
+    "rate-limiter-flexible": "11.2.0"
+  },
+  "devDependencies": {
+    "@swc/core": "1.16.2",
+    "@swc/jest": "0.2.39",
+    "@types/express": "5.0.6",
+    "@types/jest": "30.0.0",
+    "@types/node": "26.4.1",
+    "@types/pg": "8.23.1",
+    "@types/supertest": "7.2.1",
+    "jest": "30.5.1",
+    "supertest": "7.2.2",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2"
+  }
+}
