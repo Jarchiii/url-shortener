@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.local
+.DS_Store
+*.log
+
+# Personal design log — not shared publicly
+LOGBOOK.fr.md
+LOGBOOK.en.md
