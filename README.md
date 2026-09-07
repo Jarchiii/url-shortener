@@ -1,5 +1,7 @@
 # URL Shortener
 
+[![CI](https://github.com/Jarchiii/url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/Jarchiii/url-shortener/actions/workflows/ci.yml)
+
 A small, honest URL shortener. Paste a long URL, get a short one, hit the short URL to be redirected.
 
 Built to be simple to read, easy to run, and reasonable about production concerns.
