@@ -125,10 +125,11 @@ No interfaces where a single implementation is expected. TypeScript's structural
 
 ## Testing strategy
 
-- **Unit tests** live in `backend/tests/domain/` and cover the four domain pieces (`isValidUrl`, `generateCode`, `shorten`, `resolve`). They inject fake in-memory dependencies — no Docker needed. Written test-first, in tight red/green/refactor cycles.
+- **Unit tests** cover the four domain pieces (`isValidUrl`, `generateCode`, `shorten`, `resolve`) and the cached safety checker adapter (with an in-memory fake Redis). They inject fake dependencies — no Docker needed. Written test-first, in tight red/green/refactor cycles.
 - **Integration tests** live in `backend/tests/adapters/http.integration.test.ts`. They use `supertest` against a real Express app wired to a real Postgres and a real Redis (`DB 1` on the same instance). `TRUNCATE urls` + `FLUSHDB` before each test guarantees isolation.
 - **Frontend tests**: none in this scope. The frontend is a single form; the effort is better spent on UX. Tests would be added if the frontend grew (routing, multiple flows).
 - The tests are split via an `INTEGRATION=1` env var, so `npm test` stays fast and Docker-free while `npm run test:integration` is opt-in.
+- **CI** (GitHub Actions) runs both suites on every push and pull request against `main`.
 
 ---
 
@@ -168,7 +169,6 @@ Implemented:
 Not implemented, would add for production:
 
 - **Additional threat feeds**: complement Safe Browsing with PhishTank, URLhaus, Cloudflare Radar.
-- **Warning interstitial** on redirect for fresh or suspicious URLs (page with "Continue to X, are you sure?" button).
 - **Abuse reporting endpoint** + workflow to soft-delete reported links.
 - **HTTPS everywhere** via TLS termination at the load balancer.
 - **Security headers** — `helmet` middleware for HSTS, CSP, X-Content-Type-Options, referrer policy.
@@ -188,7 +188,6 @@ Product:
 
 Tech:
 
-- **CI pipeline** (GitHub Actions) — run lint, unit tests, integration tests (with a docker-compose service) on every PR.
 - **Structured logging** (pino) with request IDs and correlation.
 - **Observability** — Prometheus metrics on cache hit rate, DB latency, rate-limit hits.
 - **Configuration** — replace `.env` with a proper secrets manager (SSM, Vault, etc.).
