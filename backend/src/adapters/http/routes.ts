@@ -9,6 +9,7 @@ type RouterDeps = {
   repo: ReturnType<typeof createUrlRepository>;
   cache: ReturnType<typeof createUrlCache>;
   generateCode: () => string;
+  checkSafety: (url: string) => Promise<'safe' | 'unsafe'>;
   publicBaseUrl: string;
 };
 
@@ -29,6 +30,7 @@ export const createRouter = (deps: RouterDeps): Router => {
       const { code } = await shorten(url, {
         generateCode: deps.generateCode,
         save: deps.repo.save,
+        checkSafety: deps.checkSafety,
       });
       res.status(201).json({
         code,
@@ -38,6 +40,10 @@ export const createRouter = (deps: RouterDeps): Router => {
       const message = err instanceof Error ? err.message : 'unknown';
       if (message === 'invalid url') {
         res.status(400).json({ error: 'invalid url' });
+        return;
+      }
+      if (message === 'unsafe url') {
+        res.status(400).json({ error: 'unsafe url' });
         return;
       }
       if (message === 'could not generate unique code') {

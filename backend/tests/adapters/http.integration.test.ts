@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { Redis } from 'ioredis';
 import type { Express } from 'express';
 import { createApp } from '../../src/app.js';
+import { alwaysSafe } from '../../src/adapters/safety/safeBrowsing.js';
 
 const DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
@@ -16,7 +17,7 @@ let app: Express;
 beforeAll(() => {
   pool = new Pool({ connectionString: DATABASE_URL });
   redis = new Redis(REDIS_URL);
-  app = createApp({ pool, redis, publicBaseUrl: 'http://test.local' });
+  app = createApp({ pool, redis, publicBaseUrl: 'http://test.local', checkSafety: alwaysSafe });
 });
 
 afterAll(async () => {

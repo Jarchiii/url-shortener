@@ -15,7 +15,10 @@ export async function shortenUrl(url: string): Promise<ShortenResult> {
   }
   if (res.status === 400) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? 'Invalid URL.');
+    if (body.error === 'unsafe url') {
+      throw new Error('This URL was flagged as unsafe (malware or phishing) and cannot be shortened.');
+    }
+    throw new Error(body.error === 'invalid url' ? 'Please enter a valid http:// or https:// URL.' : body.error ?? 'Invalid URL.');
   }
   if (!res.ok) {
     throw new Error('Something went wrong. Please try again.');

@@ -3,6 +3,7 @@ import { shorten } from '../../src/domain/shorten.js';
 const deps = {
   generateCode: () => 'abc1234',
   save: async () => 'saved' as const,
+  checkSafety: async () => 'safe' as const,
 };
 
 describe('shorten', () => {
@@ -21,6 +22,7 @@ describe('shorten', () => {
     let genIdx = 0;
     let saveIdx = 0;
     const retryDeps = {
+      ...deps,
       generateCode: () => codes[genIdx++]!,
       save: async () => saveResults[saveIdx++]!,
     };
@@ -31,6 +33,7 @@ describe('shorten', () => {
   it('gives up after 5 collisions', async () => {
     let saveCalls = 0;
     const collidingDeps = {
+      ...deps,
       generateCode: () => 'always00',
       save: async () => {
         saveCalls++;
@@ -39,5 +42,13 @@ describe('shorten', () => {
     };
     await expect(shorten('https://example.com', collidingDeps)).rejects.toThrow();
     expect(saveCalls).toBe(5);
+  });
+
+  it('rejects a URL flagged as unsafe', async () => {
+    const unsafeDeps = {
+      ...deps,
+      checkSafety: async () => 'unsafe' as const,
+    };
+    await expect(shorten('https://phishing.example.com', unsafeDeps)).rejects.toThrow();
   });
 });

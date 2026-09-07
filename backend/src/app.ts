@@ -12,6 +12,7 @@ type AppDeps = {
   pool: Pool;
   redis: Redis;
   publicBaseUrl: string;
+  checkSafety: (url: string) => Promise<'safe' | 'unsafe'>;
 };
 
 export const createApp = (deps: AppDeps): Express => {
@@ -29,6 +30,7 @@ export const createApp = (deps: AppDeps): Express => {
       repo,
       cache,
       generateCode,
+      checkSafety: deps.checkSafety,
       publicBaseUrl: deps.publicBaseUrl,
     }),
   );

@@ -158,6 +158,7 @@ What I would add next, in priority order:
 Implemented:
 
 - **Strict scheme allow-list** (`http`, `https` only) — blocks `javascript:`, `data:`, `file:`, etc.
+- **Google Safe Browsing check** on `POST /shorten` — the URL is checked against Google's threat database (malware, social engineering, unwanted software) before being stored. Unsafe URLs return 400. The integration is optional and fails open: without a `SAFE_BROWSING_API_KEY`, the check is skipped so the project runs out of the box.
 - **Parameterized SQL** everywhere. No string concatenation.
 - **Rate limiting** to slow down abuse and enumeration.
 - **`trust proxy`** correctly set so the rate limiter uses the real client IP behind a load balancer.
@@ -166,7 +167,9 @@ Implemented:
 
 Not implemented, would add for production:
 
-- **Open redirect abuse** is inherent to the product. Mitigations: check destinations against a phishing/malware blacklist (Google Safe Browsing API), show a warning interstitial for freshly-created links, expose an abuse-report endpoint.
+- **Additional threat feeds**: complement Safe Browsing with PhishTank, URLhaus, Cloudflare Radar.
+- **Warning interstitial** on redirect for fresh or suspicious URLs (page with "Continue to X, are you sure?" button).
+- **Abuse reporting endpoint** + workflow to soft-delete reported links.
 - **HTTPS everywhere** via TLS termination at the load balancer.
 - **Security headers** — `helmet` middleware for HSTS, CSP, X-Content-Type-Options, referrer policy.
 - **Strict CORS** if the API is opened to external consumers.
