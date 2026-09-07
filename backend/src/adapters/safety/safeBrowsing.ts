@@ -1,4 +1,5 @@
 import type { SafetyChecker, SafetyResult } from '../../domain/ports.js';
+import { logger } from '../../logger.js';
 
 const SAFE_BROWSING_ENDPOINT = 'https://safebrowsing.googleapis.com/v4/threatMatches:find';
 
@@ -25,14 +26,14 @@ export const createSafeBrowsingChecker = (apiKey: string): SafetyChecker => {
       });
 
       if (!response.ok) {
-        console.warn(`safe browsing check failed with status ${response.status}`);
+        logger.warn({ status: response.status }, 'safe browsing check failed');
         return 'safe';
       }
 
       const data = (await response.json()) as { matches?: unknown[] };
       return data.matches && data.matches.length > 0 ? 'unsafe' : 'safe';
     } catch (err) {
-      console.warn('safe browsing check errored', err);
+      logger.warn({ err }, 'safe browsing check errored');
       return 'safe';
     }
   };

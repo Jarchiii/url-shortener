@@ -13,9 +13,8 @@ export async function resolve(code: string, deps: ResolveDeps): Promise<string |
   const fromDb = await deps.getFromDb(code);
   if (fromDb === null) return null;
 
-  deps.setCache(code, fromDb).catch((err) => {
-    console.warn('cache write failed', err);
-  });
+  // Cache write is best-effort — adapters are responsible for logging their errors.
+  deps.setCache(code, fromDb).catch(() => {});
 
   return fromDb;
 }

@@ -145,6 +145,7 @@ What's already in place:
 - **Redis cache-aside** on the read path → most redirects never touch Postgres after a warm-up.
 - **Distributed rate limiter** on Redis → correct under horizontal scaling.
 - **Unique index on `code`** + collision retry → robust up to billions of URLs.
+- **Structured JSON logging** (pino) with a per-request correlation ID surfaced as an `X-Request-ID` response header — ready for aggregation in Datadog / Loki / CloudWatch. Pretty-printed in dev, JSON in prod, silent in tests.
 - **Graceful shutdown** on SIGINT/SIGTERM.
 - **Body size cap** (10kb JSON) to prevent memory abuse.
 
@@ -194,7 +195,6 @@ Product:
 
 Tech:
 
-- **Structured logging** (pino) with request IDs and correlation.
 - **Observability** — Prometheus metrics on cache hit rate, DB latency, rate-limit hits.
 - **Configuration** — replace `.env` with a proper secrets manager (SSM, Vault, etc.).
 - **Custom error classes** — if the error space grows beyond the current two cases, replace the message-string matching with typed error classes.
