@@ -158,7 +158,7 @@ What I would add next, in priority order:
 Implemented:
 
 - **Strict scheme allow-list** (`http`, `https` only) — blocks `javascript:`, `data:`, `file:`, etc.
-- **Google Safe Browsing check** on `POST /shorten` — the URL is checked against Google's threat database (malware, social engineering, unwanted software) before being stored. Unsafe URLs return 400. The integration is optional and fails open: without a `SAFE_BROWSING_API_KEY`, the check is skipped so the project runs out of the box.
+- **Google Safe Browsing check** at both `POST /shorten` (creation time) and `GET /:code` (redirect time). URLs are checked against Google's threat database (malware, social engineering, unwanted software). At creation, unsafe URLs return 400. At redirect, unsafe URLs return 410 Gone with an HTML warning interstitial (or JSON for API consumers). Verdicts are cached in Redis for 1 hour so redirects don't hit Google's API on every request. The integration is optional and fails open: without a `SAFE_BROWSING_API_KEY`, the check is skipped so the project runs out of the box.
 - **Parameterized SQL** everywhere. No string concatenation.
 - **Rate limiting** to slow down abuse and enumeration.
 - **`trust proxy`** correctly set so the rate limiter uses the real client IP behind a load balancer.

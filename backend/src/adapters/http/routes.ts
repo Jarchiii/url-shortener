@@ -5,6 +5,7 @@ import { resolve } from '../../domain/resolve.js';
 import type { CodeGenerator, SafetyChecker } from '../../domain/ports.js';
 import type { createUrlRepository } from '../db/urlRepository.js';
 import type { createUrlCache } from '../cache/urlCache.js';
+import { renderUnsafePage } from './renderUnsafePage.js';
 
 type RouterDeps = {
   repo: ReturnType<typeof createUrlRepository>;
@@ -65,6 +66,18 @@ export const createRouter = (deps: RouterDeps): Router => {
       res.status(404).json({ error: 'not found' });
       return;
     }
+
+    const safety = await deps.checkSafety(url);
+    if (safety === 'unsafe') {
+      const acceptsHtml = req.accepts(['html', 'json']) === 'html';
+      if (acceptsHtml) {
+        res.status(410).type('html').send(renderUnsafePage(url));
+        return;
+      }
+      res.status(410).json({ error: 'url flagged as unsafe' });
+      return;
+    }
+
     res.redirect(302, url);
   });
 

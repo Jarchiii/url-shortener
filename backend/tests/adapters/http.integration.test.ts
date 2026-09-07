@@ -4,6 +4,7 @@ import { Redis } from 'ioredis';
 import type { Express } from 'express';
 import { createApp } from '../../src/app.js';
 import { alwaysSafe } from '../../src/adapters/safety/safeBrowsing.js';
+import type { SafetyChecker } from '../../src/domain/ports.js';
 
 const DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
@@ -13,11 +14,19 @@ const REDIS_URL = process.env.TEST_REDIS_URL ?? 'redis://localhost:56379/1';
 let pool: Pool;
 let redis: Redis;
 let app: Express;
+let currentSafetyVerdict: 'safe' | 'unsafe' = 'safe';
+
+const configurableSafetyChecker: SafetyChecker = async () => currentSafetyVerdict;
 
 beforeAll(() => {
   pool = new Pool({ connectionString: DATABASE_URL });
   redis = new Redis(REDIS_URL);
-  app = createApp({ pool, redis, publicBaseUrl: 'http://test.local', checkSafety: alwaysSafe });
+  app = createApp({
+    pool,
+    redis,
+    publicBaseUrl: 'http://test.local',
+    checkSafety: configurableSafetyChecker,
+  });
 });
 
 afterAll(async () => {
@@ -28,6 +37,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await pool.query('TRUNCATE urls');
   await redis.flushdb();
+  currentSafetyVerdict = 'safe';
 });
 
 describe('HTTP integration', () => {
@@ -68,5 +78,35 @@ describe('HTTP integration', () => {
   it('GET /:code returns 404 for unknown code', async () => {
     const res = await request(app).get('/unknown');
     expect(res.status).toBe(404);
+  });
+
+  it('GET /:code returns 410 JSON when the URL is now flagged as unsafe', async () => {
+    const created = await request(app)
+      .post('/shorten')
+      .send({ url: 'https://example.com/was-safe-at-creation' });
+    const code = created.body.code;
+
+    // The safety verdict flips to unsafe after creation.
+    currentSafetyVerdict = 'unsafe';
+    await redis.flushdb(); // clear the verdict cache so the checker is asked again
+
+    const res = await request(app).get(`/${code}`).set('Accept', 'application/json');
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: 'url flagged as unsafe' });
+  });
+
+  it('GET /:code returns 410 HTML interstitial when a browser requests it', async () => {
+    const created = await request(app)
+      .post('/shorten')
+      .send({ url: 'https://example.com/was-safe-at-creation' });
+    const code = created.body.code;
+
+    currentSafetyVerdict = 'unsafe';
+    await redis.flushdb();
+
+    const res = await request(app).get(`/${code}`).set('Accept', 'text/html');
+    expect(res.status).toBe(410);
+    expect(res.header['content-type']).toMatch(/text\/html/);
+    expect(res.text).toContain('Safety warning');
   });
 });

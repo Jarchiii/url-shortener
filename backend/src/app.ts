@@ -6,6 +6,7 @@ import { createUrlRepository } from './adapters/db/urlRepository.js';
 import { createUrlCache } from './adapters/cache/urlCache.js';
 import { createRouter } from './adapters/http/routes.js';
 import { createRateLimiter } from './adapters/http/rateLimiter.js';
+import { createCachedSafetyChecker } from './adapters/safety/cachedSafetyChecker.js';
 import { generateCode } from './domain/generateCode.js';
 import type { SafetyChecker } from './domain/ports.js';
 
@@ -24,6 +25,7 @@ export const createApp = (deps: AppDeps): Express => {
   const repo = createUrlRepository(deps.pool);
   const cache = createUrlCache(deps.redis);
   const rateLimit = createRateLimiter(deps.redis);
+  const cachedCheckSafety = createCachedSafetyChecker(deps.checkSafety, deps.redis);
 
   app.post('/shorten', rateLimit);
   app.use(
@@ -31,7 +33,7 @@ export const createApp = (deps: AppDeps): Express => {
       repo,
       cache,
       generateCode,
-      checkSafety: deps.checkSafety,
+      checkSafety: cachedCheckSafety,
       publicBaseUrl: deps.publicBaseUrl,
     }),
   );

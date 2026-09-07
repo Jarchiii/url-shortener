@@ -13,6 +13,9 @@ export async function shortenUrl(url: string): Promise<ShortenResult> {
   if (res.status === 429) {
     throw new Error('Too many requests. Please wait a minute and try again.');
   }
+  if (res.status === 410) {
+    throw new Error('This URL was flagged as unsafe and can no longer be used.');
+  }
   if (res.status === 400) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     if (body.error === 'unsafe url') {
