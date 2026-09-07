@@ -4,6 +4,8 @@ A small, honest URL shortener. Paste a long URL, get a short one, hit the short 
 
 Built to be simple to read, easy to run, and reasonable about production concerns.
 
+![Shortener form](docs/screenshots/shortener-form.png)
+
 ---
 
 ## Quick start
@@ -160,6 +162,8 @@ Implemented:
 
 - **Strict scheme allow-list** (`http`, `https` only) — blocks `javascript:`, `data:`, `file:`, etc.
 - **Google Safe Browsing check** at both `POST /shorten` (creation time) and `GET /:code` (redirect time). URLs are checked against Google's threat database (malware, social engineering, unwanted software). At creation, unsafe URLs return 400. At redirect, unsafe URLs return 410 Gone with an HTML warning interstitial (or JSON for API consumers). Verdicts are cached in Redis for 1 hour so redirects don't hit Google's API on every request. The integration is optional and fails open: without a `SAFE_BROWSING_API_KEY`, the check is skipped so the project runs out of the box.
+
+  ![Safety interstitial shown when a flagged URL is visited](docs/screenshots/safety-interstitial.png)
 - **Parameterized SQL** everywhere. No string concatenation.
 - **Rate limiting** to slow down abuse and enumeration.
 - **`trust proxy`** correctly set so the rate limiter uses the real client IP behind a load balancer.
