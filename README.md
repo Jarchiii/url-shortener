@@ -209,5 +209,3 @@ This project was built with an AI assistant (Kiro/Claude). I paired with the ass
 - TDD cycles on the domain — every domain function was written test-first with the assistant, then implemented.
 - Boilerplate scaffolding (Vite, docker-compose, TypeScript configuration).
 - README and code explanations.
-
-Every line of code was reviewed and I can walk through any of it. When we hit friction (Jest × nanoid ESM, Postgres unique-violation code, the `beforeEach` accidentally wiping the dev DB), we diagnosed and fixed the actual root cause rather than papering over it.

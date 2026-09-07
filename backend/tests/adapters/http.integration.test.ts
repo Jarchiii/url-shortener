@@ -109,4 +109,24 @@ describe('HTTP integration', () => {
     expect(res.header['content-type']).toMatch(/text\/html/);
     expect(res.text).toContain('Safety warning');
   });
+
+  it('returns a clean JSON 500 when the database is unreachable', async () => {
+    const brokenPool = new Pool({ connectionString: DATABASE_URL });
+    await brokenPool.end(); // any subsequent query throws
+    const brokenApp = createApp({
+      pool: brokenPool,
+      redis,
+      publicBaseUrl: 'http://test.local',
+      checkSafety: alwaysSafe,
+    });
+
+    const res = await request(brokenApp)
+      .post('/shorten')
+      .send({ url: 'https://example.com/db-down' });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'internal server error' });
+    expect(res.header['content-type']).toMatch(/application\/json/);
+    expect(res.text).not.toContain('at Pool'); // no stacktrace leaked
+  });
 });

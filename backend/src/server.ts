@@ -18,6 +18,14 @@ if (!databaseUrl || !redisUrl) {
 const pool = new Pool({ connectionString: databaseUrl });
 const redis = new Redis(redisUrl);
 
+pool.on('error', (err) => {
+  logger.error({ err }, 'unexpected pg pool error');
+});
+
+redis.on('error', (err) => {
+  logger.warn({ err: err.message }, 'redis connection error');
+});
+
 const checkSafety = safeBrowsingApiKey
   ? createSafeBrowsingChecker(safeBrowsingApiKey)
   : alwaysSafe;

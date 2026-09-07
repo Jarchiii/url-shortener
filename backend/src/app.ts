@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import express from 'express';
-import type { Express, Request, Response } from 'express';
+import type { Express, ErrorRequestHandler, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import type { Redis } from 'ioredis';
 import { pinoHttp } from 'pino-http';
@@ -18,6 +18,12 @@ type AppDeps = {
   redis: Redis;
   publicBaseUrl: string;
   checkSafety: SafetyChecker;
+};
+
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  req.log.error({ err }, 'unhandled error');
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'internal server error' });
 };
 
 export const createApp = (deps: AppDeps): Express => {
@@ -61,6 +67,8 @@ export const createApp = (deps: AppDeps): Express => {
       publicBaseUrl: deps.publicBaseUrl,
     }),
   );
+
+  app.use(errorHandler);
 
   return app;
 };
