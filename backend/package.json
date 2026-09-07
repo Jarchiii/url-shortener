@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file=.env src/server.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "build": "tsc",
-    "start": "node --env-file=.env dist/src/server.js",
+    "start": "node --env-file-if-exists=.env dist/src/server.js",
     "test": "jest",
     "test:integration": "INTEGRATION=1 jest",
     "test:watch": "jest --watch",
-    "migrate": "tsx --env-file=.env scripts/migrate.ts",
-    "migrate:test": "tsx --env-file=.env scripts/migrate.ts --test"
+    "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
+    "migrate:test": "tsx --env-file-if-exists=.env scripts/migrate.ts --test"
   },
   "dependencies": {
     "express": "5.2.1",
