@@ -11,6 +11,9 @@ export async function resolve(code: string, deps: ResolveDeps): Promise<string |
   const fromDb = await deps.getFromDb(code);
   if (fromDb === null) return null;
 
-  await deps.setCache(code, fromDb);
+  deps.setCache(code, fromDb).catch((err) => {
+    console.warn('cache write failed', err);
+  });
+
   return fromDb;
 }

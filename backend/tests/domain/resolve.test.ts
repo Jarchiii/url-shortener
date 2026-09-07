@@ -43,4 +43,16 @@ describe('resolve', () => {
     expect(result).toBeNull();
     expect(cacheWrites).toEqual([]);
   });
+
+  it('returns the URL even if the cache write fails after a DB hit', async () => {
+    const deps = {
+      getFromCache: async () => null,
+      getFromDb: async () => 'https://example.com',
+      setCache: async () => {
+        throw new Error('redis down');
+      },
+    };
+    const result = await resolve('abc1234', deps);
+    expect(result).toBe('https://example.com');
+  });
 });
