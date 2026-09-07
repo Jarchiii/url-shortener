@@ -1,7 +1,9 @@
+import type { SafetyChecker, SafetyResult } from '../../domain/ports.js';
+
 const SAFE_BROWSING_ENDPOINT = 'https://safebrowsing.googleapis.com/v4/threatMatches:find';
 
-export const createSafeBrowsingChecker = (apiKey: string) => {
-  return async (url: string): Promise<'safe' | 'unsafe'> => {
+export const createSafeBrowsingChecker = (apiKey: string): SafetyChecker => {
+  return async (url: string): Promise<SafetyResult> => {
     try {
       const response = await fetch(`${SAFE_BROWSING_ENDPOINT}?key=${apiKey}`, {
         method: 'POST',
@@ -36,4 +38,4 @@ export const createSafeBrowsingChecker = (apiKey: string) => {
   };
 };
 
-export const alwaysSafe = async (): Promise<'safe' | 'unsafe'> => 'safe';
+export const alwaysSafe: SafetyChecker = async () => 'safe';

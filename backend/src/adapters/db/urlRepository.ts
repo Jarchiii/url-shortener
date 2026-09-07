@@ -1,9 +1,10 @@
 import type { Pool } from 'pg';
+import type { SaveResult } from '../../domain/ports.js';
 
 const UNIQUE_VIOLATION = '23505';
 
 export const createUrlRepository = (pool: Pool) => ({
-  save: async (code: string, url: string): Promise<'saved' | 'collision'> => {
+  save: async (code: string, url: string): Promise<SaveResult> => {
     try {
       await pool.query('INSERT INTO urls (code, long_url) VALUES ($1, $2)', [code, url]);
       return 'saved';

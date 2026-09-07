@@ -1,7 +1,9 @@
+import type { CacheGetter, CacheSetter, UrlLoader } from './ports.js';
+
 type ResolveDeps = {
-  getFromCache: (code: string) => Promise<string | null>;
-  getFromDb: (code: string) => Promise<string | null>;
-  setCache: (code: string, url: string) => Promise<void>;
+  getFromCache: CacheGetter;
+  getFromDb: UrlLoader;
+  setCache: CacheSetter;
 };
 
 export async function resolve(code: string, deps: ResolveDeps): Promise<string | null> {

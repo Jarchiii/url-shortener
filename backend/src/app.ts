@@ -7,12 +7,13 @@ import { createUrlCache } from './adapters/cache/urlCache.js';
 import { createRouter } from './adapters/http/routes.js';
 import { createRateLimiter } from './adapters/http/rateLimiter.js';
 import { generateCode } from './domain/generateCode.js';
+import type { SafetyChecker } from './domain/ports.js';
 
 type AppDeps = {
   pool: Pool;
   redis: Redis;
   publicBaseUrl: string;
-  checkSafety: (url: string) => Promise<'safe' | 'unsafe'>;
+  checkSafety: SafetyChecker;
 };
 
 export const createApp = (deps: AppDeps): Express => {

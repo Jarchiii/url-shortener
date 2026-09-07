@@ -2,14 +2,15 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { shorten } from '../../domain/shorten.js';
 import { resolve } from '../../domain/resolve.js';
+import type { CodeGenerator, SafetyChecker } from '../../domain/ports.js';
 import type { createUrlRepository } from '../db/urlRepository.js';
 import type { createUrlCache } from '../cache/urlCache.js';
 
 type RouterDeps = {
   repo: ReturnType<typeof createUrlRepository>;
   cache: ReturnType<typeof createUrlCache>;
-  generateCode: () => string;
-  checkSafety: (url: string) => Promise<'safe' | 'unsafe'>;
+  generateCode: CodeGenerator;
+  checkSafety: SafetyChecker;
   publicBaseUrl: string;
 };
 

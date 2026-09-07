@@ -1,11 +1,12 @@
 import { isValidUrl } from './urlValidator.js';
+import type { CodeGenerator, UrlSaver, SafetyChecker } from './ports.js';
 
 const MAX_ATTEMPTS = 5;
 
 type ShortenDeps = {
-  generateCode: () => string;
-  save: (code: string, url: string) => Promise<'saved' | 'collision'>;
-  checkSafety: (url: string) => Promise<'safe' | 'unsafe'>;
+  generateCode: CodeGenerator;
+  save: UrlSaver;
+  checkSafety: SafetyChecker;
 };
 
 export async function shorten(url: string, deps: ShortenDeps): Promise<{ code: string }> {
