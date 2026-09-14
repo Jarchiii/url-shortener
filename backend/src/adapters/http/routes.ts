@@ -5,6 +5,7 @@ import { resolve } from '../../domain/resolve.js';
 import type { CodeGenerator, SafetyChecker } from '../../domain/ports.js';
 import type { createUrlRepository } from '../db/urlRepository.js';
 import type { createUrlCache } from '../cache/urlCache.js';
+import type { AdsProvider } from '../ads/adsProvider.js';
 import { renderUnsafePage } from './renderUnsafePage.js';
 
 type RouterDeps = {
@@ -12,6 +13,7 @@ type RouterDeps = {
   cache: ReturnType<typeof createUrlCache>;
   generateCode: CodeGenerator;
   checkSafety: SafetyChecker;
+  fetchAd: AdsProvider;
   publicBaseUrl: string;
 };
 
@@ -20,6 +22,22 @@ export const createRouter = (deps: RouterDeps): Router => {
 
   router.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok' });
+  });
+
+  router.get('/ads', async (req: Request, res: Response) => {
+    const width = Number(req.query.width);
+    const height = Number(req.query.height);
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+      res.status(400).json({ error: 'invalid dimensions' });
+      return;
+    }
+    try {
+      const ad = await deps.fetchAd({ width, height });
+      res.json(ad);
+    } catch (err) {
+      req.log.warn({ err }, 'ads fetch failed');
+      res.status(502).json({ error: 'ads unavailable' });
+    }
   });
 
   router.post('/shorten', async (req: Request, res: Response) => {

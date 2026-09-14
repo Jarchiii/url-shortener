@@ -15,6 +15,7 @@ export default defineConfig({
     proxy: {
       '/shorten': 'http://localhost:3000',
       '/health': 'http://localhost:3000',
+      '/ads': 'http://localhost:3000',
       '^/[A-Za-z0-9]{7}$': 'http://localhost:3000',
     },
   },

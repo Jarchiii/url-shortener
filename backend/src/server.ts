@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { Redis } from 'ioredis';
 import { createApp } from './app.js';
 import { createSafeBrowsingChecker, alwaysSafe } from './adapters/safety/safeBrowsing.js';
+import { createAdsProvider, type AdsProvider } from './adapters/ads/adsProvider.js';
 import { logger } from './logger.js';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -9,6 +10,8 @@ const databaseUrl = process.env.DATABASE_URL;
 const redisUrl = process.env.REDIS_URL;
 const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? `http://localhost:${port}`;
 const safeBrowsingApiKey = process.env.SAFE_BROWSING_API_KEY;
+const adsApiUrl = process.env.ADS_API_URL;
+const adsApiToken = process.env.ADS_API_TOKEN;
 
 if (!databaseUrl || !redisUrl) {
   logger.fatal('DATABASE_URL and REDIS_URL are required.');
@@ -34,7 +37,18 @@ if (!safeBrowsingApiKey) {
   logger.warn('SAFE_BROWSING_API_KEY not set — safety checks disabled (all URLs pass).');
 }
 
-const app = createApp({ pool, redis, publicBaseUrl, checkSafety });
+const fetchAd: AdsProvider =
+  adsApiUrl && adsApiToken
+    ? createAdsProvider(adsApiUrl, adsApiToken)
+    : async () => {
+        throw new Error('ads provider not configured');
+      };
+
+if (!adsApiUrl || !adsApiToken) {
+  logger.warn('ADS_API_URL or ADS_API_TOKEN not set — /ads endpoint will return 502.');
+}
+
+const app = createApp({ pool, redis, publicBaseUrl, checkSafety, fetchAd });
 
 const server = app.listen(port, () => {
   logger.info({ port, publicBaseUrl }, 'server listening');

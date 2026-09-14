@@ -11,6 +11,7 @@ import { createRateLimiter } from './adapters/http/rateLimiter.js';
 import { createCachedSafetyChecker } from './adapters/safety/cachedSafetyChecker.js';
 import { generateCode } from './domain/generateCode.js';
 import type { CacheGetter, CacheSetter, SafetyChecker } from './domain/ports.js';
+import type { AdsProvider } from './adapters/ads/adsProvider.js';
 import { logger } from './logger.js';
 
 type AppDeps = {
@@ -18,6 +19,7 @@ type AppDeps = {
   redis: Redis;
   publicBaseUrl: string;
   checkSafety: SafetyChecker;
+  fetchAd: AdsProvider;
 };
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
@@ -73,6 +75,7 @@ export const createApp = (deps: AppDeps): Express => {
       cache: { get: safeCacheGet, set: safeCacheSet },
       generateCode,
       checkSafety: cachedCheckSafety,
+      fetchAd: deps.fetchAd,
       publicBaseUrl: deps.publicBaseUrl,
     }),
   );

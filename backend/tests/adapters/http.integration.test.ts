@@ -5,6 +5,7 @@ import type { Express } from 'express';
 import { createApp } from '../../src/app.js';
 import { alwaysSafe } from '../../src/adapters/safety/safeBrowsing.js';
 import type { SafetyChecker } from '../../src/domain/ports.js';
+import type { AdsProvider } from '../../src/adapters/ads/adsProvider.js';
 
 const DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
@@ -18,6 +19,14 @@ let currentSafetyVerdict: 'safe' | 'unsafe' = 'safe';
 
 const configurableSafetyChecker: SafetyChecker = async () => currentSafetyVerdict;
 
+const fakeFetchAd: AdsProvider = async ({ width, height }) => ({
+  id: 'test-ad',
+  imageUrl: `https://test.local/ad-${width}x${height}.png`,
+  link: 'https://test.local/click',
+  width,
+  height,
+});
+
 beforeAll(() => {
   pool = new Pool({ connectionString: DATABASE_URL });
   redis = new Redis(REDIS_URL);
@@ -26,6 +35,7 @@ beforeAll(() => {
     redis,
     publicBaseUrl: 'http://test.local',
     checkSafety: configurableSafetyChecker,
+    fetchAd: fakeFetchAd,
   });
 });
 
@@ -118,6 +128,7 @@ describe('HTTP integration', () => {
       redis,
       publicBaseUrl: 'http://test.local',
       checkSafety: alwaysSafe,
+      fetchAd: fakeFetchAd,
     });
 
     const res = await request(brokenApp)
@@ -154,6 +165,7 @@ describe('HTTP integration', () => {
       redis: brokenRedis,
       publicBaseUrl: 'http://test.local',
       checkSafety: alwaysSafe,
+      fetchAd: fakeFetchAd,
     });
 
     const res = await request(brokenApp).get('/nored01');
@@ -161,5 +173,37 @@ describe('HTTP integration', () => {
     expect(res.header.location).toBe('https://example.com/no-redis');
 
     brokenRedis.disconnect();
+  });
+
+  it('GET /ads returns an ad for valid dimensions', async () => {
+    const res = await request(app).get('/ads?width=400&height=400');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: 'test-ad',
+      link: 'https://test.local/click',
+      width: 400,
+      height: 400,
+    });
+  });
+
+  it('GET /ads returns 400 for invalid dimensions', async () => {
+    const res = await request(app).get('/ads?width=abc&height=400');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'invalid dimensions' });
+  });
+
+  it('GET /ads returns 502 when the ads provider fails', async () => {
+    const failingApp = createApp({
+      pool,
+      redis,
+      publicBaseUrl: 'http://test.local',
+      checkSafety: alwaysSafe,
+      fetchAd: async () => {
+        throw new Error('ads api down');
+      },
+    });
+    const res = await request(failingApp).get('/ads?width=400&height=400');
+    expect(res.status).toBe(502);
+    expect(res.body).toEqual({ error: 'ads unavailable' });
   });
 });
