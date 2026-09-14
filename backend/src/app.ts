@@ -10,7 +10,7 @@ import { createRouter } from './adapters/http/routes.js';
 import { createRateLimiter } from './adapters/http/rateLimiter.js';
 import { createCachedSafetyChecker } from './adapters/safety/cachedSafetyChecker.js';
 import { generateCode } from './domain/generateCode.js';
-import type { CacheSetter, SafetyChecker } from './domain/ports.js';
+import type { CacheGetter, CacheSetter, SafetyChecker } from './domain/ports.js';
 import { logger } from './logger.js';
 
 type AppDeps = {
@@ -49,6 +49,15 @@ export const createApp = (deps: AppDeps): Express => {
   const rateLimit = createRateLimiter(deps.redis);
   const cachedCheckSafety = createCachedSafetyChecker(deps.checkSafety, deps.redis);
 
+  const safeCacheGet: CacheGetter = async (code) => {
+    try {
+      return await cache.get(code);
+    } catch (err) {
+      logger.warn({ err, code }, 'cache read failed');
+      return null;
+    }
+  };
+
   const safeCacheSet: CacheSetter = async (code, url) => {
     try {
       await cache.set(code, url);
@@ -61,7 +70,7 @@ export const createApp = (deps: AppDeps): Express => {
   app.use(
     createRouter({
       repo,
-      cache: { get: cache.get, set: safeCacheSet },
+      cache: { get: safeCacheGet, set: safeCacheSet },
       generateCode,
       checkSafety: cachedCheckSafety,
       publicBaseUrl: deps.publicBaseUrl,

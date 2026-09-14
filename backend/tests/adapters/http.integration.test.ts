@@ -129,4 +129,37 @@ describe('HTTP integration', () => {
     expect(res.header['content-type']).toMatch(/application\/json/);
     expect(res.text).not.toContain('at Pool'); // no stacktrace leaked
   });
+
+  it('serves redirects even if Redis is unavailable (falls back to DB)', async () => {
+    // Insert a URL directly in DB (bypass shorten which needs Redis for rate limit).
+    await pool.query(
+      'INSERT INTO urls (code, long_url) VALUES ($1, $2)',
+      ['nored01', 'https://example.com/no-redis'],
+    );
+
+    // Broken Redis: bogus port, fail fast, no retries.
+    const brokenRedis = new Redis({
+      host: 'localhost',
+      port: 1,
+      maxRetriesPerRequest: 0,
+      enableOfflineQueue: false,
+      lazyConnect: true,
+    });
+    brokenRedis.on('error', () => {
+      /* swallow — the test expects Redis failures */
+    });
+
+    const brokenApp = createApp({
+      pool,
+      redis: brokenRedis,
+      publicBaseUrl: 'http://test.local',
+      checkSafety: alwaysSafe,
+    });
+
+    const res = await request(brokenApp).get('/nored01');
+    expect(res.status).toBe(302);
+    expect(res.header.location).toBe('https://example.com/no-redis');
+
+    brokenRedis.disconnect();
+  });
 });
